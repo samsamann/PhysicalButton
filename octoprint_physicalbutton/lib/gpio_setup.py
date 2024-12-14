@@ -14,12 +14,19 @@ def setup_buttons():
         if button.get('gpio') == "none" or not button.get('enabled'):
             continue
         button_gpio = int(button.get('gpio'))
+        button_type = button.get('buttonType')
         button_mode = button.get('buttonMode')
         new_button = Button(button_gpio, pull_up=True, bounce_time=None)
-        if button_mode == "Normally Open (NO)":
+
+        if button_type == 'Toggle':
+            bg.plugin._logger.debug(f"Added Buttons: {button_type}")
             new_button.when_pressed = react_to_input
-        if button_mode == "Normally Closed (NC)":
             new_button.when_released = react_to_input
+        else:
+            if button_mode == "Normally Open (NO)":
+                new_button.when_pressed = react_to_input
+            if button_mode == "Normally Closed (NC)":
+                new_button.when_released = react_to_input
         bg.button_list.append(new_button)
         setup_output_pins(button)
     bg.plugin._logger.debug(f"Added Buttons: {bg.button_list}")

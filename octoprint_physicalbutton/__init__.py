@@ -7,14 +7,21 @@ from . import button_globals as bg
 from .lib.gpio_setup import setup_buttons, remove_buttons, remove_outputs
 from .lib.helpers import register_button_actions
 
+from . import api
 
 class PhysicalbuttonPlugin(octoprint.plugin.AssetPlugin,
                            octoprint.plugin.EventHandlerPlugin,
                            octoprint.plugin.SettingsPlugin,
                            octoprint.plugin.ShutdownPlugin,
+                           octoprint.plugin.SimpleApiPlugin,
                            octoprint.plugin.StartupPlugin,
                            octoprint.plugin.TemplatePlugin
                            ):
+    def __init__(self):
+        super(PhysicalbuttonPlugin, self).__init__()
+
+        # Submodules
+        self.api = api.PluginApi(self)
 
     def on_after_startup(self):
         bg.plugin = self
@@ -127,6 +134,23 @@ class PhysicalbuttonPlugin(octoprint.plugin.AssetPlugin,
             }
         }
 
+    def get_api_commands(self):
+        return self.api.get_api_commands()
+
+    def on_api_command(self, command, data):
+        return self.api.on_api_command(command, data)
+    
+    def on_api_get(self, request):
+        return self.api.on_api_get(request)
+    
+    def toggleMockPin(self, buttonId):
+        if buttonId == -1 or not bg.debug or len(bg.button_list) < buttonId:
+            return
+        button = bg.button_list[buttonId]
+        if button.value:
+            button.pin.drive_high()
+        else:
+            button.pin.drive_low()
 
 __plugin_name__ = "Physical Button"
 __plugin_pythoncompat__ = ">=3,<4"  # python 3
