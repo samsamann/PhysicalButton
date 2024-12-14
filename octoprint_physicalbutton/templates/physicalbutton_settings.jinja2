@@ -93,6 +93,10 @@
                                     <option data-bind="value:$data, text: gpioListItem == 'none' ? gpioListItem : 'GPIO' + gpioListItem, disable: $root.disableGpioOption(gpioListItem,button.gpio)"></option>
                                 </select>
                             </div>
+                            <div class="control-group">
+                                <label for="" title="Choose button type">Type:</label>
+                                <select data-bind="value: button.buttonType, options:$root.buttonTypes"></select>
+                            </div>
                             <div class="control-group choose-mode">
                                 <label for="" title="Choose a mode for your button">Mode:</label>
                                 <select data-bind="value: button.buttonMode, options:$root.buttonModes"></select>
@@ -124,87 +128,199 @@
                                     <option value="">be a bug!</option>
                                 </select>
                             </div>
+                            <div>
+                                <div class="btn-group control-group add-new-activity">
+                                    <button class="btn btn-small" data-bind="click: $parent.addToggleAction">Action</button>
+                                    <button class="btn btn-small" data-bind="click: $parent.addToggleFile">File</button>
+                                    <button class="btn btn-small" data-bind="click: $parent.addToggleGCODE">GCODE</button>
+                                    <button class="btn btn-small" data-bind="click: $parent.addToggleSystem">System</button>
+                                    <button class="btn btn-small" data-bind="click: $parent.addToggleOutput">Output</button> 
+                                </div>
+                                <div class="control-group activity-list">
+                                    <label for="" title="List of your added activities">Toogle Activities:</label>
+                                    <select
+                                        data-bind="options:button.toggleActivities, valueAllowUnset: true,value:$parent.selectedToggleActivity, attr:{size:Math.max(button.toggleActivities().length,2)},optionsText:function(item){return item.type()+': '+item.identifier();}">
+                                        <option value="">If you see this,</option>
+                                        <option value="">then there must</option>
+                                        <option value="">be a bug!</option>
+                                    </select>
+                                </div> 
+                            </div>
+                            <div class="control-group">
+                                <button class="btn" data-bind="click: $parent.clickTestButton">Test Button</button>
+                            </div>
                         </div>
-                        <div class="span6 right-side" data-bind="if:$parent.selectedActivity()">
-                            <div class="control-group remove-activity">
-                                <button class="btn btn-danger" data-bind="click: $parent.removeActivity" title="Delete the currently selected activity">
-                                    <i class="far fa-trash-alt"></i> Activity
-                                </button>
-                            </div>
-                            <div class="control-group choose-identifier">
-                                <label for="" title="Choose an identifier for your activity">Identifier:</label>
-                                <input type="text" data-bind="value:$parent.selectedActivity().identifier">
-                            </div>
-                            <div class="control-group insert-at-index">
-                                <a type="btn" data-bind="click: $parent.updatePosition" title="Place the activity at your chosen position">Insert at position:</a>
-                                <input type="number" min="1" data-bind="value:$parent.index, attr:{max:activities().length}">
-                            </div>
-                            <div class="control-group activity-gcode" data-bind="if:$parent.selectedActivity().type() == 'gcode'">
-                                <label for="" title="Choose  GCODE that should be executed on trigger">GCODE:</label>
-                                <textarea data-bind="attr:{rows: 5}, value:$parent.selectedActivity().execute, event:{change: $parent.activityChanged}"></textarea>
-                            </div>
-                            <div class="control-group activity-action" data-bind="if:$parent.selectedActivity().type() == 'action'">
-                                <label for="" title="Choose an action that should be executed on trigger">Action:</label>
-                                <select data-bind="foreach: {data:$root.actions, as: 'action'}, value:$parent.selectedActivity().execute, event:{change: $parent.activityChanged}">
-                                    <option data-bind="value: value, text: value, attr: {title: title} "></option>
-                                </select>
-                            </div>
-                            <div class="control-group activity-system" data-bind="if:$parent.selectedActivity().type() == 'system'">
-                                <label for="" title="Type in commands for the Pi to run">System:</label>
-                                <textarea data-bind="attr:{rows: 5}, value:$parent.selectedActivity().execute, event:{change: $parent.activityChanged}"></textarea>
-                            </div>
-                            <div class="control-group activity-file" data-bind="if:$parent.selectedActivity().type() == 'file'">
-                                <div class="control-group path-file">
-                                    <label for="" title="Type in a relative path from the uploads folder or an absolute path to a file. Add @sd: if the file is on the SD of your printer.">Path to file:&nbsp;&nbsp;</label>
-                                    <a data-toggle="modal" href="#attentionFile" data-bind="if:$parent.selectedActivity().type() == 'file'">
-                                        <i class="fas fa-info-circle"></i>
-                                    </a>
+                        <div class="span6 right-side">
+                            <div data-bind="if:$parent.selectedActivity()">
+                                <div class="control-group remove-activity">
+                                    <button class="btn btn-danger" data-bind="click: $parent.removeActivity" title="Delete the currently selected activity">
+                                        <i class="far fa-trash-alt"></i> Activity
+                                    </button>
                                 </div>
-                                <textarea data-bind="attr:{rows: 5}, value:$parent.selectedActivity().execute, event:{change: $parent.activityChanged}" placeholder="Path/To/File.gcode"></textarea>
-                            </div>
-                            <div class="control-group activity-plugin" data-bind="if:$parent.selectedActivity().type() == 'plugin'">
-                                 <div class="control-group">
-                                    <label for="" title="Choose a plugin">Plugin:</label>
-                                    <select data-bind="options:Object.keys($root.supportedPlugins()), value:$parent.selectedActivity().execute.plugin, event:{change: $parent.activityChanged}"></select>
+                                <div class="control-group choose-identifier">
+                                    <label for="" title="Choose an identifier for your activity">Identifier:</label>
+                                    <input type="text" data-bind="value:$parent.selectedActivity().identifier">
                                 </div>
-                                <div class="control-group">
+                                <div class="control-group insert-at-index">
+                                    <a type="btn" data-bind="click: $parent.updatePosition" title="Place the activity at your chosen position">Insert at position:</a>
+                                    <input type="number" min="1" data-bind="value:$parent.index, attr:{max:activities().length}">
+                                </div>
+                                <div class="control-group activity-gcode" data-bind="if:$parent.selectedActivity().type() == 'gcode'">
+                                    <label for="" title="Choose  GCODE that should be executed on trigger">GCODE:</label>
+                                    <textarea data-bind="attr:{rows: 5}, value:$parent.selectedActivity().execute, event:{change: $parent.activityChanged}"></textarea>
+                                </div>
+                                <div class="control-group activity-action" data-bind="if:$parent.selectedActivity().type() == 'action'">
                                     <label for="" title="Choose an action that should be executed on trigger">Action:</label>
-                                    <select data-bind="options:$root.supportedPlugins()[$parent.selectedActivity().execute.plugin()], value:$parent.selectedActivity().execute.action, event:{change: $parent.activityChanged}"></select>
+                                    <select data-bind="foreach: {data:$root.actions, as: 'action'}, value:$parent.selectedActivity().execute, event:{change: $parent.activityChanged}">
+                                        <option data-bind="value: value, text: value, attr: {title: title} "></option>
+                                    </select>
+                                </div>
+                                <div class="control-group activity-system" data-bind="if:$parent.selectedActivity().type() == 'system'">
+                                    <label for="" title="Type in commands for the Pi to run">System:</label>
+                                    <textarea data-bind="attr:{rows: 5}, value:$parent.selectedActivity().execute, event:{change: $parent.activityChanged}"></textarea>
+                                </div>
+                                <div class="control-group activity-file" data-bind="if:$parent.selectedActivity().type() == 'file'">
+                                    <div class="control-group path-file">
+                                        <label for="" title="Type in a relative path from the uploads folder or an absolute path to a file. Add @sd: if the file is on the SD of your printer.">Path to file:&nbsp;&nbsp;</label>
+                                        <a data-toggle="modal" href="#attentionFile" data-bind="if:$parent.selectedActivity().type() == 'file'">
+                                            <i class="fas fa-info-circle"></i>
+                                        </a>
+                                    </div>
+                                    <textarea data-bind="attr:{rows: 5}, value:$parent.selectedActivity().execute, event:{change: $parent.activityChanged}" placeholder="Path/To/File.gcode"></textarea>
+                                </div>
+                                <div class="control-group activity-plugin" data-bind="if:$parent.selectedActivity().type() == 'plugin'">
+                                    <div class="control-group">
+                                        <label for="" title="Choose a plugin">Plugin:</label>
+                                        <select data-bind="options:Object.keys($root.supportedPlugins()), value:$parent.selectedActivity().execute.plugin, event:{change: $parent.activityChanged}"></select>
+                                    </div>
+                                    <div class="control-group">
+                                        <label for="" title="Choose an action that should be executed on trigger">Action:</label>
+                                        <select data-bind="options:$root.supportedPlugins()[$parent.selectedActivity().execute.plugin()], value:$parent.selectedActivity().execute.action, event:{change: $parent.activityChanged}"></select>
+                                    </div>
+                                </div>
+                                <div class="activity-output" data-bind="if:$parent.selectedActivity().type() == 'output'">
+                                    <div class="span6 output-pin-time">
+                                        <div class="control-group output-pin">
+                                            <label title="The GPIO the output should be applied to.">GPIO:</label>
+                                            <select data-bind="foreach: {data:$root.gpios, as: 'gpioListItem'}, value:$parent.selectedActivity().execute.gpio, event:{ change: function(data,event) {$parent.activityChanged(data,event); $parent.outputGpioChanged($parent.selectedActivity().execute.gpio(),$parent.selectedActivity().execute.id(),data,event)}}">
+                                                <option data-bind="value:$data, text: gpioListItem == 'none' ? gpioListItem : 'GPIO' + gpioListItem, disable: $root.disableGpioOutputOption(gpioListItem)"></option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group output-time">
+                                            <label title="The time for how long the value will be applied. Use 0 to apply output without time!">Time (ms):</label>
+                                            <input  min="0" type="number" data-bind="value:$parent.selectedActivity().execute.time, event:{change: $parent.activityChanged}">
+                                        </div>
+                                        <div class="control-group output-init">
+                                            <label title = "This value is applied when OctoPrint starts up or when settings are saved">Initial value:</label>
+                                            <select data-bind="value: $parent.selectedActivity().execute.initial, event:{ change: function(data,event) {$parent.initialValueChanged($parent.selectedActivity().execute.initial(),$parent.selectedActivity().execute.gpio(),$parent.selectedActivity().execute.id(),data,event)}}">
+                                                <option value="LOW">LOW</option>
+                                                <option value="HIGH">HIGH</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="span6 output-value-async">
+                                        <div class="control-group output-value">
+                                            <label title="The value that should be applied to the GPIO on activation.">Active:</label>
+                                            <select data-bind="foreach: {data:$root.outputOptions, as: 'output'}, value:$parent.selectedActivity().execute.value, event:{change: $parent.activityChanged}">
+                                                <option data-bind="value:output, text:output"></option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group output-async">
+                                            <label for="" title="Continue executing next activity immediately without waiting">Async:</label>
+                                            <select data-bind="value:$parent.selectedActivity().execute.async">
+                                                <option value="False">False</option>
+                                                <option value="True">True</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="activity-output" data-bind="if:$parent.selectedActivity().type() == 'output'">
-                                <div class="span6 output-pin-time">
-                                    <div class="control-group output-pin">
-                                        <label title="The GPIO the output should be applied to.">GPIO:</label>
-                                        <select data-bind="foreach: {data:$root.gpios, as: 'gpioListItem'}, value:$parent.selectedActivity().execute.gpio, event:{ change: function(data,event) {$parent.activityChanged(data,event); $parent.outputGpioChanged($parent.selectedActivity().execute.gpio(),$parent.selectedActivity().execute.id(),data,event)}}">
-                                            <option data-bind="value:$data, text: gpioListItem == 'none' ? gpioListItem : 'GPIO' + gpioListItem, disable: $root.disableGpioOutputOption(gpioListItem)"></option>
-                                        </select>
+
+
+                            
+
+                            <div data-bind="if:$parent.selectedToggleActivity()">
+                                <div class="control-group remove-activity">
+                                    <button class="btn btn-danger" data-bind="click: $parent.removeToggleActivity" title="Delete the currently selected toggle activity">
+                                        <i class="far fa-trash-alt"></i> Activity
+                                    </button>
+                                </div>
+                                <div class="control-group choose-identifier">
+                                    <label for="" title="Choose an identifier for your activity">Identifier:</label>
+                                    <input type="text" data-bind="value:$parent.selectedToggleActivity().identifier">
+                                </div>
+                                <div class="control-group insert-at-index">
+                                    <a type="btn" data-bind="click: $parent.updateTogglePosition" title="Place the activity at your chosen position">Insert at position:</a>
+                                    <input type="number" min="1" data-bind="value:$parent.index, attr:{max:toggleActivities().length}">
+                                </div>
+                                <div class="control-group activity-gcode" data-bind="if:$parent.selectedToggleActivity().type() == 'gcode'">
+                                    <label for="" title="Choose  GCODE that should be executed on trigger">GCODE:</label>
+                                    <textarea data-bind="attr:{rows: 5}, value:$parent.selectedToggleActivity().execute, event:{change: $parent.toggleActivityChanged}"></textarea>
+                                </div>
+                                <div class="control-group activity-action" data-bind="if:$parent.selectedToggleActivity().type() == 'action'">
+                                    <label for="" title="Choose an action that should be executed on trigger">Action:</label>
+                                    <select data-bind="foreach: {data:$root.actions, as: 'action'}, value:$parent.selectedToggleActivity().execute, event:{change: $parent.toggleActivityChanged}">
+                                        <option data-bind="value: value, text: value, attr: {title: title} "></option>
+                                    </select>
+                                </div>
+                                <div class="control-group activity-system" data-bind="if:$parent.selectedToggleActivity().type() == 'system'">
+                                    <label for="" title="Type in commands for the Pi to run">System:</label>
+                                    <textarea data-bind="attr:{rows: 5}, value:$parent.selectedToggleActivity().execute, event:{change: $parent.toggleActivityChanged}"></textarea>
+                                </div>
+                                <div class="control-group activity-file" data-bind="if:$parent.selectedToggleActivity().type() == 'file'">
+                                    <div class="control-group path-file">
+                                        <label for="" title="Type in a relative path from the uploads folder or an absolute path to a file. Add @sd: if the file is on the SD of your printer.">Path to file:&nbsp;&nbsp;</label>
+                                        <a data-toggle="modal" href="#attentionFile" data-bind="if:$parent.selectedToggleActivity().type() == 'file'">
+                                            <i class="fas fa-info-circle"></i>
+                                        </a>
                                     </div>
-                                    <div class="control-group output-time">
-                                        <label title="The time for how long the value will be applied. Use 0 to apply output without time!">Time (ms):</label>
-                                        <input  min="0" type="number" data-bind="value:$parent.selectedActivity().execute.time, event:{change: $parent.activityChanged}">
+                                    <textarea data-bind="attr:{rows: 5}, value:$parent.selectedToggleActivity().execute, event:{change: $parent.toggleActivityChanged}" placeholder="Path/To/File.gcode"></textarea>
+                                </div>
+                                <div class="control-group activity-plugin" data-bind="if:$parent.selectedToggleActivity().type() == 'plugin'">
+                                    <div class="control-group">
+                                        <label for="" title="Choose a plugin">Plugin:</label>
+                                        <select data-bind="options:Object.keys($root.supportedPlugins()), value:$parent.selectedToggleActivity().execute.plugin, event:{change: $parent.toggleActivityChanged}"></select>
                                     </div>
-                                    <div class="control-group output-init">
-                                        <label title = "This value is applied when OctoPrint starts up or when settings are saved">Initial value:</label>
-                                        <select data-bind="value: $parent.selectedActivity().execute.initial, event:{ change: function(data,event) {$parent.initialValueChanged($parent.selectedActivity().execute.initial(),$parent.selectedActivity().execute.gpio(),$parent.selectedActivity().execute.id(),data,event)}}">
-                                            <option value="LOW">LOW</option>
-                                            <option value="HIGH">HIGH</option>
-                                        </select>
+                                    <div class="control-group">
+                                        <label for="" title="Choose an action that should be executed on trigger">Action:</label>
+                                        <select data-bind="options:$root.supportedPlugins()[$parent.selectedToggleActivity().execute.plugin()], value:$parent.selectedActivity().execute.action, event:{change: $parent.toggleActivityChanged}"></select>
                                     </div>
                                 </div>
-                                <div class="span6 output-value-async">
-                                    <div class="control-group output-value">
-                                        <label title="The value that should be applied to the GPIO on activation.">Active:</label>
-                                        <select data-bind="foreach: {data:$root.outputOptions, as: 'output'}, value:$parent.selectedActivity().execute.value, event:{change: $parent.activityChanged}">
-                                            <option data-bind="value:output, text:output"></option>
-                                        </select>
+
+                                <div class="activity-output" data-bind="if:$parent.selectedToggleActivity().type() == 'output'">
+                                    <div class="span6 output-pin-time">
+                                        <div class="control-group output-pin">
+                                            <label title="The GPIO the output should be applied to.">GPIO:</label>
+                                            <select data-bind="foreach: {data:$root.gpios, as: 'gpioListItem'}, value:$parent.selectedToggleActivity().execute.gpio, event:{ change: function(data,event) {$parent.toggleActivityChanged(data,event); $parent.outputGpioChanged($parent.selectedActivity().execute.gpio(),$parent.selectedActivity().execute.id(),data,event)}}">
+                                                <option data-bind="value:$data, text: gpioListItem == 'none' ? gpioListItem : 'GPIO' + gpioListItem, disable: $root.disableGpioOutputOption(gpioListItem)"></option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group output-time">
+                                            <label title="The time for how long the value will be applied. Use 0 to apply output without time!">Time (ms):</label>
+                                            <input  min="0" type="number" data-bind="value:$parent.selectedToggleActivity().execute.time, event:{change: $parent.toggleActivityChanged}">
+                                        </div>
+                                        <div class="control-group output-init">
+                                            <label title = "This value is applied when OctoPrint starts up or when settings are saved">Initial value:</label>
+                                            <select data-bind="value: $parent.selectedToggleActivity().execute.initial, event:{ change: function(data,event) {$parent.initialValueChanged($parent.selectedToggleActivity().execute.initial(),$parent.selectedToggleActivity().execute.gpio(),$parent.selectedActivity().execute.id(),data,event)}}">
+                                                <option value="LOW">LOW</option>
+                                                <option value="HIGH">HIGH</option>
+                                            </select>
+                                        </div>
                                     </div>
-                                    <div class="control-group output-async">
-                                        <label for="" title="Continue executing next activity immediately without waiting">Async:</label>
-                                        <select data-bind="value:$parent.selectedActivity().execute.async">
-                                            <option value="False">False</option>
-                                            <option value="True">True</option>
-                                        </select>
+                                    <div class="span6 output-value-async">
+                                        <div class="control-group output-value">
+                                            <label title="The value that should be applied to the GPIO on activation.">Active:</label>
+                                            <select data-bind="foreach: {data:$root.outputOptions, as: 'output'}, value:$parent.selectedToggleActivity().execute.value, event:{change: $parent.activityChanged}">
+                                                <option data-bind="value:output, text:output"></option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group output-async">
+                                            <label for="" title="Continue executing next activity immediately without waiting">Async:</label>
+                                            <select data-bind="value:$parent.selectedToggleActivity().execute.async">
+                                                <option value="False">False</option>
+                                                <option value="True">True</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

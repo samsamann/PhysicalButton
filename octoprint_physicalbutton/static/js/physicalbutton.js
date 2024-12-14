@@ -73,6 +73,9 @@ $(function() {
             }
         ]);
 
+        //button type:
+        self.buttonTypes = ko.observableArray(['Toggle', 'Switch']);
+
         //button modes:
         self.buttonModes = ko.observableArray(['Normally Open (NO)', 'Normally Closed (NC)']);
 
@@ -88,6 +91,7 @@ $(function() {
         self.selectedGPIO = ko.observable();
 
         self.selectedActivity = ko.observable();
+        self.selectedToggleActivity = ko.observable();
         self.index = ko.observable(1);
 
         self.changeDetected = ko.observable(false);
@@ -153,6 +157,8 @@ $(function() {
             }
             self.buttons.push({
                 activities: ko.observableArray([]),
+                toggleActivities: ko.observableArray([]),
+                buttonType: ko.observable('Toggle'),
                 buttonMode: ko.observable('Normally Open (NO)'),
                 buttonName: ko.observable('New Button Name'),
                 enabled: ko.observable(true),
@@ -236,6 +242,19 @@ $(function() {
             self.selectedActivity(this.activities()[this.activities().length - 1]);
         };
 
+        self.addToggleAction = function() {
+            let updatedItem = this;
+            if (!updatedItem.toggleActivities()) {
+                updatedItem.toggleActivities([]);
+            }
+            updatedItem.toggleActivities.push({
+                type: ko.observable('action'),
+                identifier: ko.observable('New Action'),
+                execute: ko.observable('none')
+            });
+            self.selectedToggleActivity(this.toggleActivities()[this.toggleActivities().length - 1]);
+        };
+
         self.addGCODE = function() {
             let updatedItem = this;
             if (!updatedItem.activities()) {
@@ -247,6 +266,19 @@ $(function() {
                 execute: ko.observable('')
             });
             self.selectedActivity(this.activities()[this.activities().length - 1]);
+        };
+
+        self.addToggleGCODE = function() {
+            let updatedItem = this;
+            if (!updatedItem.toggleActivities()) {
+                updatedItem.toggleActivities([]);
+            }
+            updatedItem.toggleActivities.push({
+                type: ko.observable('gcode'),
+                identifier: ko.observable('New GCODE'),
+                execute: ko.observable('')
+            });
+            self.selectedToggleActivity(this.toggleActivities()[this.toggleActivities().length - 1]);
         };
 
         self.addSystem = function() {
@@ -262,6 +294,19 @@ $(function() {
             self.selectedActivity(this.activities()[this.activities().length - 1]);
         };
 
+        self.addToggleSystem = function() {
+            let updatedItem = this;
+            if (!updatedItem.toggleActivities()) {
+                updatedItem.toggleActivities([]);
+            }
+            updatedItem.toggleActivities.push({
+                type: ko.observable('system'),
+                identifier: ko.observable('New System Command'),
+                execute: ko.observable('')
+            });
+            self.selectedToggleActivity(this.toggleActivities()[this.toggleActivities().length - 1]);
+        };
+
         self.addFile = function() {
             let updatedItem = this;
             if (!updatedItem.activities()) {
@@ -273,6 +318,19 @@ $(function() {
                 execute: ko.observable('')
             });
             self.selectedActivity(this.activities()[this.activities().length - 1]);
+        };
+
+        self.addToggleFile = function() {
+            let updatedItem = this;
+            if (!updatedItem.toggleActivities()) {
+                updatedItem.toggleActivities([]);
+            }
+            updatedItem.toggleActivities.push({
+                type: ko.observable('file'),
+                identifier: ko.observable('New File'),
+                execute: ko.observable('')
+            });
+            self.selectedToggleActivity(this.toggleActivities()[this.toggleActivities().length - 1]);
         };
 
         self.addOutput = function() {
@@ -293,6 +351,26 @@ $(function() {
                 }
             });
             self.selectedActivity(this.activities()[this.activities().length - 1]);
+        }
+
+        self.addToggleOutput = function() {
+            let updatedItem = this;
+            if (!updatedItem.toggleActivities()) {
+                updatedItem.toggleActivities([]);
+            }
+            updatedItem.toggleActivities.push({
+                type: ko.observable('output'),
+                identifier: ko.observable('New Output'),
+                execute: {
+                    gpio: ko.observable('none'),
+                    value: ko.observable('HIGH'),
+                    time: ko.observable('500'),
+                    async: ko.observable('False'),
+                    initial: ko.observable('LOW'),
+                    id: ko.observable(Date.now())
+                }
+            });
+            self.selectedToggleActivity(this.toggleActivities()[this.toggleActivities().length - 1]);
         }
 
         self.addPluginAction = function(){
@@ -385,6 +463,80 @@ $(function() {
             }
         }
 
+        self.toggleActivityChanged = function(data, event){
+            if(event.originalEvent){
+                const identifier = self.selectedToggleActivity().identifier();
+                if(self.selectedToggleActivity().type() === 'action'){
+                    if (identifier === 'New Action' || identifier.replace(/\s/g, "") === '' || self.actions().includes(identifier)) {
+                        const execute = self.selectedToggleActivity().execute();
+                        self.selectedToggleActivity().identifier(execute);
+                    }
+                    return;
+                }
+
+                if(self.selectedToggleActivity().type() === 'gcode'){
+                    if (identifier === 'New GCODE' || identifier.replace(/\s/g, "") === ''){
+                        const execute = self.selectedToggleActivity().execute().split('\n');
+                        const first = execute[0];
+
+                        self.selectedToggleActivity().identifier(first);
+                    }
+                    return;
+                }
+
+                if(self.selectedToggleActivity().type() === 'system'){
+                    if (identifier === 'New System Command' || identifier.replace(/\s/g, "") === ''){
+                        const execute = self.selectedToggleActivity().execute().split('\n');
+                        const first = execute[0];
+                        self.selectedToggleActivity().identifier(first);
+                    }
+                    return;
+                }
+
+                if(self.selectedToggleActivity().type() === 'file'){
+                    const fileFormats = ['s3g', 'x3d','gcode', 'gco', 'g']
+
+                    if (identifier === 'New File' || identifier.replace(/\s/g, "") === ''
+                        || fileFormats.map(x => identifier.split('.')[identifier.split('.').length -1] === x).reduce((prev, curr) => prev || curr)){
+                        const execute = self.selectedToggleActivity().execute().split('/');
+                        const file = execute[execute.length -1];
+
+                        if (fileFormats.map(x => file.split('.')[file.split('.').length-1] === x).reduce((prev, curr) => prev || curr)){
+                            self.selectedToggleActivity().identifier(file);
+                        }
+                    }
+                    return;
+                }
+
+                if(self.selectedToggleActivity().type() === 'output'){
+                    if (identifier === 'New Output' || identifier.replace(/\s/g, "") === '' || identifier.includes('GPIO none') ||(identifier.includes('GPIO') && identifier.includes('-') && identifier.includes('ms'))){
+                        const gpio = self.selectedToggleActivity().execute.gpio();
+                        let value = self.selectedToggleActivity().execute.value();
+                        value = value[0] + value.substring(1).toLowerCase();
+                        const time = self.selectedToggleActivity().execute.time();
+                        let newIdentifier = 'GPIO' + gpio + '-' + value + '-' + time + 'ms'
+                        if (gpio === 'none'){
+                            newIdentifier = 'GPIO none';
+                        }
+                        self.selectedToggleActivity().identifier(newIdentifier);
+
+                    }
+                    return;
+                }
+
+                if (self.selectedToggleActivity().type() === 'plugin') {
+                    let plugin = identifier.split(': ').length > 1 ? identifier.split(': ')[0] : '';
+                    let action = identifier.split(': ').length > 1 ? identifier.split(': ')[1] : '';
+                    if (identifier === 'New Plugin Action' || identifier.replace(/\s/g, "") === '' || (Object.keys(self.supportedPlugins()).includes(plugin) && self.supportedPlugins()[plugin].includes(action))) {
+                        let newIdentifier = self.selectedToggleActivity().execute.plugin() + ': ' + self.selectedToggleActivity().execute.action();
+                        self.selectedToggleActivity().identifier(newIdentifier);
+                    }
+                    return;
+                }
+
+            }
+        }
+
         self.initialValueChanged = function(initialValue, gpio, id, data, event){
             if (gpio === 'none'){
                 return;
@@ -428,8 +580,20 @@ $(function() {
             self.selectedActivity(this.activities()[this.activities().length - 1]);
         };
 
+        self.removeToggleActivity = function() {
+            if (!self.selectedToggleActivity()) {
+                return;
+            }
+            this.toggleActivities.remove(self.selectedToggleActivity());
+            self.selectedToggleActivity(this.toggleActivities()[this.toggleActivities().length - 1]);
+        };
+
         self.changeSelection = function() {
             self.selectedActivity(this.activities()[0]);
+        };
+
+        self.changeToggleSelection = function() {
+            self.selectedToggleActivity(this.toggleActivities()[0]);
         };
 
         self.updatePosition = function() {
@@ -452,6 +616,35 @@ $(function() {
             }
             self.index(1)
         };
+
+        self.updateTogglePosition = function() {
+            const length = this.toggleActivities().length
+            if (length < 2)
+                return;
+            if (self.index() < 1) {
+                self.index(1)
+            }
+            if (self.index() > length) {
+                self.index(length)
+            }
+            const current = self.selectedToggleActivity();
+            const amount = length - self.index();
+            this.toggleActivities.remove(current);
+            const spliced = this.toggleActivities.splice(self.index() - 1, amount);
+            this.toggleActivities.push(current);
+            for (let i = 0; i < spliced.length; i++) {
+                this.toggleActivities.push(spliced[i]);
+            }
+            self.index(1)
+        };
+
+        self.clickTestButton = function() {
+            OctoPrint.simpleApiCommand(
+                "physicalbutton",
+                "mock_toogle_pin",
+                {"id": 0}
+            );
+        }
     }
 
     /* view model class, parameters for constructor, container to bind to
